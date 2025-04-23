@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 50px;
+        }
+        .container {
+            max-width: 600px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background-color: #4a89dc;
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .result-container {
+            display: none;
+            margin-top: 20px;
+        }
+        .url-card {
+            border-left: 5px solid #4a89dc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background-color: white;
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h1 class="mb-0">URL Shortener</h1>
+                <p class="mb-0 mt-2">Shorten your long URLs into compact, easy-to-share links</p>
+            </div>
+            <div class="card-body p-4">
+                <form id="urlForm">
+                    <div class="mb-3">
+                        <label for="longUrl" class="form-label">Enter your URL</label>
+                        <div class="input-group">
+                            <input type="url" class="form-control" id="longUrl" placeholder="https://example.com/very/long/url" required>
+                            <button class="btn btn-primary" type="submit" id="submitBtn">
+                                <span id="loadingSpinner" class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                                Shorten
+                            </button>
+                        </div>
+                        <div class="form-text text-danger d-none" id="urlError">Please enter a valid URL including http:// or https://</div>
+                    </div>
+                </form>
+                
+                <div class="result-container" id="resultContainer">
+                    <h5>Your shortened URL:</h5>
+                    <div class="url-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="#" id="shortUrl" target="_blank"></a>
+                                <p class="text-muted mb-0 small" id="longUrlDisplay"></p>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" id="copyBtn">Copy</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlForm = document.getElementById('urlForm');
+            const longUrlInput = document.getElementById('longUrl');
+            const resultContainer = document.getElementById('resultContainer');
+            const shortUrlElement = document.getElementById('shortUrl');
+            const longUrlDisplay = document.getElementById('longUrlDisplay');
+            const copyBtn = document.getElementById('copyBtn');
+            const urlError = document.getElementById('urlError');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            urlForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const longUrl = longUrlInput.value.trim();
+                
+                // Simple validation
+                if (!isValidUrl(longUrl)) {
+                    urlError.classList.remove('d-none');
+                    return;
+                }
+                
+                urlError.classList.add('d-none');
+                loadingSpinner.classList.remove('d-none');
+                submitBtn.disabled = true;
+                
+                try {
+                    const response = await fetch('/shorten', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ url: longUrl })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        // Display the result
+                        resultContainer.style.display = 'block';
+                        shortUrlElement.textContent = data.short_url;
+                        shortUrlElement.href = data.short_url;
+                        longUrlDisplay.textContent = longUrl;
+                    } else {
+                        alert('Error: ' + JSON.stringify(data));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                } finally {
+                    loadingSpinner.classList.add('d-none');
+                    submitBtn.disabled = false;
+                }
+            });
+            
+            copyBtn.addEventListener('click', function() {
+                navigator.clipboard.writeText(shortUrlElement.textContent)
+                    .then(() => {
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => {
+                            copyBtn.textContent = originalText;
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy: ', err);
+                        alert('Failed to copy URL');
+                    });
+            });
+            
+            function isValidUrl(url) {
+                try {
+                    new URL(url);
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            }
+        });
+    </script>
+</body>
+</html> 
