@@ -1,0 +1,50 @@
+version: '3'
+
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  url-shortener1:
+    build: ./src/url-shortener
+    expose:
+      - "5000"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+
+  url-shortener2:
+    build: ./src/url-shortener
+    expose:
+      - "5000"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+
+  url-shortener3:
+    build: ./src/url-shortener
+    expose:
+      - "5000"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - url-shortener1
+      - url-shortener2
+      - url-shortener3
+
+volumes:
+  redis-data: 
