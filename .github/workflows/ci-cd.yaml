@@ -8,8 +8,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build Docker Image
-      run: docker build -t <your-dockerhub-username>/url-shortener:latest .
+      run: docker build -t musashi1364/url-shortener:latest .
     - name: Push to Docker Hub
       run: |
         docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-        docker push <your-dockerhub-username>/url-shortener:latest
+        docker push musashi1364/url-shortener:latest
