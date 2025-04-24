@@ -22,7 +22,9 @@ def shorten_url():
     if not long_url:
         return {'error': 'URL is required'}, 400
     short_code = generate_short_url(long_url)
-    redis_client.set(short_code, long_url)
+    
+    # Store the URL in Redis with a 30-second expiration
+    redis_client.setex(short_code, 30, long_url)
     
     # Use X-Forwarded-Host header if available, otherwise use request.host
     host = request.headers.get('X-Forwarded-Host', request.host)
@@ -38,7 +40,7 @@ def redirect_url(short_code):
     long_url = redis_client.get(short_code)
     if long_url:
         return redirect(long_url)
-    return {'error': 'URL not found'}, 404
+    return {'error': 'URL not found or expired'}, 404
 
 @app.route('/')
 def homepage():
